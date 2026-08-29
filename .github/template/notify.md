@@ -26,7 +26,7 @@
 - 🐳 **Docker**: `${TOOL_DOCKER_VER}`
 - 🔀 **Git**: `${TOOL_GIT_VER}`
 
-#### 📁 磁盘 59G 空间占用占比实测 (Top Directories)
+#### 📁 磁盘空间分析
 ```text
 ${DISK_BREAKDOWN}
 ```

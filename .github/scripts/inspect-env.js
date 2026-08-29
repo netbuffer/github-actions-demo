@@ -75,10 +75,10 @@ async function main() {
   // 获取预装 Docker 镜像分析
   const dockerImages = runCmd("docker images --format '{{.Repository}}:{{.Tag}} ({{.Size}})' | head -n 10");
   
-  // 获取关键目录的大文件占用清单
-  let diskDetail = runCmd("df -h /usr /usr/local /opt /var /mnt /home /opt/hostedtoolcache 2>/dev/null | awk 'NR>1 {printf \"%s: %s (已用 %s)\\n\", $6, $2, $3}'");
+  // 使用 ncdu 导出根目录非交互式分析（导出前15项大文件/目录）
+  let diskDetail = runCmd("sudo apt-get install -y ncdu >/dev/null 2>&1 && sudo ncdu -o - / 2>/dev/null | head -n 30");
   if (!diskDetail || diskDetail === 'N/A') {
-    diskDetail = runCmd("df -h / | awk 'NR==2 {print \"根分区总量: \"$2\" | 已用: \"$3\" | 剩余: \"$4}'");
+    diskDetail = runCmd("sudo du -h --max-depth=1 / 2>/dev/null | sort -rh | head -n 12");
   }
 
   // 将收集到的环境变量写入 GitHub Actions 环境变量传给后续步骤
