@@ -76,10 +76,14 @@ async function main() {
   const dockerImages = runCmd("docker images --format '{{.Repository}}:{{.Tag}} ({{.Size}})' | head -n 10");
   
   // 获取关键目录的大文件占用清单
-  const diskDetail = runCmd("du -h -d 1 /usr /usr/local /opt /var /mnt /home 2>/dev/null | sort -rh | head -n 12");
+  let diskDetail = runCmd("df -h /usr /usr/local /opt /var /mnt /home /opt/hostedtoolcache 2>/dev/null | awk 'NR>1 {printf \"%s: %s (已用 %s)\\n\", $6, $2, $3}'");
+  if (!diskDetail || diskDetail === 'N/A') {
+    diskDetail = runCmd("df -h / | awk 'NR==2 {print \"根分区总量: \"$2\" | 已用: \"$3\" | 剩余: \"$4}'");
+  }
 
   // 将收集到的环境变量写入 GitHub Actions 环境变量传给后续步骤
   if (process.env.GITHUB_ENV) {
+    const formattedDiskDetail = diskDetail.split('\n').join(' \\n ');
     const envData = [
       `RUNNER_OS_PRETTY=${osPretty}`,
       `RUNNER_KERNEL=${kernelVer}`,
@@ -94,8 +98,7 @@ async function main() {
       `TOOL_PYTHON_VER=${pythonVer}`,
       `TOOL_DOCKER_VER=${dockerVer}`,
       `TOOL_GIT_VER=${gitVer}`,
-      `DOCKER_PRECACHED_IMAGES=${dockerImages.replace(/\n/g, ' \\n ')}`,
-      `DISK_BREAKDOWN=${diskDetail.replace(/\n/g, ' \\n ')}`
+      `DISK_BREAKDOWN=${formattedDiskDetail}`
     ].join('\n');
     
     require('fs').appendFileSync(process.env.GITHUB_ENV, envData + '\n');
