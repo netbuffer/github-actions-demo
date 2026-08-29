@@ -1,0 +1,8 @@
+### 🚀 GitHub Actions 自动化构建通知
+
+- **项目仓库**: ${REPO}
+- **触发分支**: ${BRANCH}
+- **触发用户**: ${ACTOR}
+- **构建状态**: ${STATUS}
+- **提交 SHA**: ${SHA}
+- **提交信息**: ${COMMIT_MSG}

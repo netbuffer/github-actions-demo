@@ -26,16 +26,12 @@ jobs:
       - name: Run tests
         run: npm test
 
-      # Action 来源: https://github.com/ghostoy/dingtalk-action
-      - name: Send DingTalk Notification
+      # 原生 Node.js 自研钉钉通知脚本 (独立 msg.txt 模板维护，零依赖，零 Warning)
+      - name: Send Custom DingTalk Notification
         if: always()
-        uses: ghostoy/dingtalk-action@v1.0.0
-        with:
-          webhook: ${{ secrets.DINGTALK_WEBHOOK }}
-          secret: ${{ secrets.DINGTALK_SECRET }}
-          msgtype: markdown
-          content: |
-            {
-              "title": "GitHub Actions 单元测试与构建通知",
-              "text": "### 🚀 CI/CD 构建通知\n- **仓库**: ${{ github.repository }}\n- **分支**: ${{ github.ref_name }}\n- **触发者**: ${{ github.actor }}\n- **构建状态**: ${{ job.status == 'success' && '✅ 成功' || '❌ 失败' }}\n- **提交信息**: ${{ github.event.head_commit.message }}"
-            }
+        env:
+          DINGTALK_WEBHOOK: ${{ secrets.DINGTALK_WEBHOOK }}
+          DINGTALK_SECRET: ${{ secrets.DINGTALK_SECRET }}
+          JOB_STATUS: ${{ job.status }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: node .github/scripts/send-dingtalk.js
