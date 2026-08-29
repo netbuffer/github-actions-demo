@@ -75,8 +75,38 @@ async function main() {
   // 获取预装 Docker 镜像分析
   const dockerImages = runCmd("docker images --format '{{.Repository}}:{{.Tag}} ({{.Size}})' | head -n 10");
   
-  // 使用现代极简可视化磁盘分析工具 duf + df 组合
-  let diskDetail = runCmd("duf -only local 2>/dev/null || df -h -T -x tmpfs -x devtmpfs -x squashfs");
+  // 1. 获取 duf 磁盘概览
+  const dufSummary = runCmd("duf -only local 2>/dev/null");
+
+  // 2. 统计顶级重点目录（/usr, /opt, /var, /opt/hostedtoolcache 等）的真实占用 GB 大小
+  const dirsToScan = [
+    '/opt/hostedtoolcache',
+    '/usr/share',
+    '/usr/local',
+    '/usr/lib',
+    '/var/lib/docker',
+    '/var/log',
+    '/mnt',
+    '/home'
+  ];
+
+  let dirBreakdownLines = [];
+  dirsToScan.forEach(dirPath => {
+    const res = runCmd(`du -sh ${dirPath} 2>/dev/null | awk '{print $1"\\t"$2}'`);
+    if (res && res !== 'N/A') {
+      const [size, pathStr] = res.split('\t');
+      if (size && pathStr) {
+        dirBreakdownLines.push(`• ${pathStr.padEnd(25)} : ${size}`);
+      }
+    }
+  });
+
+  const diskDetail = [
+    dufSummary,
+    '',
+    '📁 根目录下重点大文件夹实际占用 (Top Folder Usage):',
+    ...dirBreakdownLines
+  ].join('\n');
 
   // 将收集到的环境变量写入 GitHub Actions 环境变量传给后续步骤
   if (process.env.GITHUB_ENV) {
