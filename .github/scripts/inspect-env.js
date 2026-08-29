@@ -78,8 +78,8 @@ async function main() {
   // 1. 获取 duf 磁盘概览
   const dufSummary = runCmd("duf -only local 2>/dev/null");
 
-  // 2. 一次性获取全盘占用最高的 Top 15 目录（涵盖所有预装软件目录）
-  const topUsageOutput = runCmd("sudo du -h --max-depth=2 / 2>/dev/null | grep -E '^([0-9.]+[G|M])' | sort -rh | head -n 18");
+  // 2. 秒级抓取根目录下一级子目录的真实占用大小（完美防超时，稳定匹配）
+  const topUsageOutput = runCmd("sudo du -h -d 1 /opt /usr /var /home /mnt /boot 2>/dev/null | sort -rh");
   
   let dirBreakdownLines = [];
   if (topUsageOutput && topUsageOutput !== 'N/A') {
@@ -88,9 +88,7 @@ async function main() {
       if (parts.length >= 2) {
         const size = parts[0];
         const pathStr = parts[1];
-        if (pathStr !== '/' && !pathStr.startsWith('/proc') && !pathStr.startsWith('/sys') && !pathStr.startsWith('/dev')) {
-          dirBreakdownLines.push(`• ${pathStr.padEnd(28)} : ${size}`);
-        }
+        dirBreakdownLines.push(`• ${pathStr.padEnd(28)} : ${size}`);
       }
     });
   }
