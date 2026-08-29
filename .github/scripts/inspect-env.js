@@ -2,9 +2,9 @@ const { execSync } = require('child_process');
 const os = require('os');
 const https = require('https');
 
-function runCmd(cmd) {
+function runCmd(cmd, timeoutMs = 10000) {
   try {
-    return execSync(cmd, { encoding: 'utf8', timeout: 10000 }).trim();
+    return execSync(cmd, { encoding: 'utf8', timeout: timeoutMs }).trim();
   } catch (e) {
     return 'N/A';
   }
@@ -75,8 +75,12 @@ async function main() {
   // 获取预装 Docker 镜像分析
   const dockerImages = runCmd("docker images --format '{{.Repository}}:{{.Tag}} ({{.Size}})' | head -n 10");
   
-  // 扫描顶级重点目录及工具缓存目录
-  let diskDetail = runCmd("du -sh /opt /usr /var /mnt /home /opt/hostedtoolcache /usr/share /usr/local 2>/dev/null | sort -rh");
+  // 使用 ncdu 非交互模式导出磁盘报告并格式化（使用用户提议的 ncdu 方案）
+  let diskDetail = runCmd("sudo apt-get install -y ncdu >/dev/null 2>&1 && sudo ncdu -o /tmp/ncdu.json / >/dev/null 2>&1 && ncdu -f /tmp/ncdu.json --export | head -n 35", 30000);
+  
+  if (!diskDetail || diskDetail === 'N/A') {
+    diskDetail = runCmd("du -h --max-depth=2 /opt /usr /var /mnt /home 2>/dev/null | sort -rh | head -n 15", 20000);
+  }
 
   // 将收集到的环境变量写入 GitHub Actions 环境变量传给后续步骤
   if (process.env.GITHUB_ENV) {
