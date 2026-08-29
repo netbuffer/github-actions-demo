@@ -2,7 +2,7 @@ const { execSync } = require('child_process');
 const os = require('os');
 const https = require('https');
 
-function runCmd(cmd, timeoutMs = 10000) {
+function runCmd(cmd, timeoutMs = 25000) {
   try {
     return execSync(cmd, { encoding: 'utf8', timeout: timeoutMs }).trim();
   } catch (e) {
@@ -78,32 +78,22 @@ async function main() {
   // 1. 获取 duf 磁盘概览
   const dufSummary = runCmd("duf -only local 2>/dev/null");
 
-  // 2. 统计顶级重点目录的真实占用 GB 大小（加上 sudo 提升读取权限）
-  const dirsToScan = [
-    '/opt/hostedtoolcache',
-    '/opt',
-    '/usr/share',
-    '/usr/local',
-    '/usr/lib',
-    '/usr',
-    '/var/lib/docker',
-    '/var/log',
-    '/var',
-    '/mnt',
-    '/home',
-    '/swapfile'
-  ];
-
+  // 2. 一次性获取全盘占用最高的 Top 15 目录（涵盖所有预装软件目录）
+  const topUsageOutput = runCmd("sudo du -h --max-depth=2 / 2>/dev/null | grep -E '^([0-9.]+[G|M])' | sort -rh | head -n 18");
+  
   let dirBreakdownLines = [];
-  dirsToScan.forEach(dirPath => {
-    const res = runCmd(`sudo du -sh ${dirPath} 2>/dev/null | awk '{print $1"\\t"$2}'`);
-    if (res && res !== 'N/A') {
-      const [size, pathStr] = res.split('\t');
-      if (size && pathStr) {
-        dirBreakdownLines.push(`• ${pathStr.padEnd(25)} : ${size}`);
+  if (topUsageOutput && topUsageOutput !== 'N/A') {
+    topUsageOutput.split('\n').forEach(line => {
+      const parts = line.trim().split(/\s+/);
+      if (parts.length >= 2) {
+        const size = parts[0];
+        const pathStr = parts[1];
+        if (pathStr !== '/' && !pathStr.startsWith('/proc') && !pathStr.startsWith('/sys') && !pathStr.startsWith('/dev')) {
+          dirBreakdownLines.push(`• ${pathStr.padEnd(28)} : ${size}`);
+        }
       }
-    }
-  });
+    });
+  }
 
   const diskDetail = [
     dufSummary,
