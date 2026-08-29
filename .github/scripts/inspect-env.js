@@ -78,21 +78,29 @@ async function main() {
   // 1. 获取 duf 磁盘概览
   const dufSummary = runCmd("duf -only local 2>/dev/null");
 
-  // 直接在指定目录下进行无风险极速扫描，避免扫描整个根目录触发超时
-  const topUsageOutput = runCmd("sudo du -sh /opt /opt/hostedtoolcache /usr /usr/share /usr/local /usr/lib /var /var/lib/docker /home /swapfile 2>/dev/null | sort -rh");
-  
+  // 逐个安全独立查询目录大小，绝对不因单个命令阻塞整个流程
+  const dirsToScan = [
+    '/usr',
+    '/opt',
+    '/opt/hostedtoolcache',
+    '/usr/local',
+    '/usr/share',
+    '/usr/lib',
+    '/var',
+    '/var/lib/docker',
+    '/home',
+    '/swapfile'
+  ];
+
   let dirBreakdownLines = [];
-  if (topUsageOutput && topUsageOutput !== 'N/A') {
-    topUsageOutput.split('\n').forEach(line => {
-      const parts = line.trim().split(/\s+/);
+  for (const d of dirsToScan) {
+    const res = runCmd(`sudo du -sh ${d} 2>/dev/null`, 3000);
+    if (res && res !== 'N/A') {
+      const parts = res.split(/\s+/);
       if (parts.length >= 2) {
-        const size = parts[0];
-        const pathStr = parts[1];
-        if (pathStr !== '/') {
-          dirBreakdownLines.push(`• ${pathStr.padEnd(28)} : ${size}`);
-        }
+        dirBreakdownLines.push(`• ${parts[1].padEnd(28)} : ${parts[0]}`);
       }
-    });
+    }
   }
 
   const diskDetail = [
