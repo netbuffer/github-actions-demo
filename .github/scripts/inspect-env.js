@@ -75,15 +75,15 @@ async function main() {
   // 获取预装 Docker 镜像分析
   const dockerImages = runCmd("docker images --format '{{.Repository}}:{{.Tag}} ({{.Size}})' | head -n 10");
   
-  // 使用 ncdu 导出根目录非交互式分析（导出前15项大文件/目录）
-  let diskDetail = runCmd("sudo apt-get install -y ncdu >/dev/null 2>&1 && sudo ncdu -o - / 2>/dev/null | head -n 30");
+  // 使用纯 Bash 原生指令列出根目录下各顶级目录的大小占比（如 /usr, /opt, /var 等）
+  let diskDetail = runCmd("df -h --output=target,size,used,avail / | tail -n 1 && echo '---' && du -sh /usr /opt /var /mnt /home /etc /root /usr/local /opt/hostedtoolcache 2>/dev/null | sort -rh");
   if (!diskDetail || diskDetail === 'N/A') {
-    diskDetail = runCmd("sudo du -h --max-depth=1 / 2>/dev/null | sort -rh | head -n 12");
+    diskDetail = runCmd("ls -la /");
   }
 
   // 将收集到的环境变量写入 GitHub Actions 环境变量传给后续步骤
   if (process.env.GITHUB_ENV) {
-    const formattedDiskDetail = diskDetail.split('\n').join(' \\n ');
+    const formattedDiskDetail = diskDetail.split('\n').join('\n');
     const envData = [
       `RUNNER_OS_PRETTY=${osPretty}`,
       `RUNNER_KERNEL=${kernelVer}`,
@@ -97,11 +97,11 @@ async function main() {
       `TOOL_MAVEN_VER=${mvnVer}`,
       `TOOL_PYTHON_VER=${pythonVer}`,
       `TOOL_DOCKER_VER=${dockerVer}`,
-      `TOOL_GIT_VER=${gitVer}`,
-      `DISK_BREAKDOWN=${formattedDiskDetail}`
+      `TOOL_GIT_VER=${gitVer}`
     ].join('\n');
     
     require('fs').appendFileSync(process.env.GITHUB_ENV, envData + '\n');
+    require('fs').appendFileSync(process.env.GITHUB_ENV, `DISK_BREAKDOWN<<EOF\n${diskDetail}\nEOF\n`);
   }
 }
 
