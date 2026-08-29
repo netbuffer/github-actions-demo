@@ -12,8 +12,8 @@ function sendDingTalk() {
     return;
   }
 
-  // 读取 msg.md 消息模版
-  const templatePath = path.join(__dirname, '../../msg.md');
+  // 读取 notify.md 消息模版
+  const templatePath = path.join(__dirname, '../../notify.md');
   let content = fs.readFileSync(templatePath, 'utf8');
 
   // 构建状态友好的显示图标
@@ -26,7 +26,7 @@ function sendDingTalk() {
     SHORT_SHA: (process.env.GITHUB_SHA || '').substring(0, 7)
   };
 
-  // 支持在 msg.md 中使用任意 ${VAR_NAME} 形式的环境变量
+  // 支持在 notify.md 中使用任意 ${VAR_NAME} 形式的环境变量
   content = content.replace(/\$\{([A-Z0-9_]+)\}/g, (match, key) => {
     return variables[key] !== undefined ? variables[key] : match;
   });
