@@ -10,7 +10,7 @@ on:
 jobs:
   build-and-test:
     # Runner 可选列表参考文档: https://docs.github.com/en/actions/reference/runners/github-hosted-runners
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
       # Action 来源: https://github.com/actions/checkout
@@ -20,6 +20,9 @@ jobs:
       # Action 来源: https://github.com/actions/setup-node
       - name: Set up Node.js
         uses: actions/setup-node@v7
+
+      - name: Inspect Runner Environment
+        run: node .github/scripts/inspect-env.js
 
       - name: Install dependencies
         run: npm ci || npm install
