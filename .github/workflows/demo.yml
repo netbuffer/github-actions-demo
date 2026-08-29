@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ "main", "master" ]
   workflow_dispatch:
+  # 外部 Webhook/API 远程触发 (支持自定义 event_type 与 client_payload 数据)
+  # 官方文档参考: https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#repository_dispatch
+  repository_dispatch:
+    types: [webhook_trigger, deploy_event]
 
 jobs:
   build-and-test:

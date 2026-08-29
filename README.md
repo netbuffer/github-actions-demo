@@ -45,3 +45,26 @@ github-actions-demo/
 | `${GITHUB_RUN_ID}` | 当前工作流运行实例的唯一 ID | `1689201` |
 | `${GITHUB_RUN_NUMBER}` | 该工作流累计运行次数 | `4` |
 | `${GITHUB_SHA}` | 完整 Commit Hash | `3bd3210a4b...` |
+
+---
+
+## 🌐 远程 API 触发指南 (`repository_dispatch`)
+
+可通过 GitHub REST API 供外部系统 (如 Jenkins、自研 DevOps 平台、Postman 或 cURL) 远程远程发送 Webhook 触发此流水线。
+
+> 官方参考文档: [repository_dispatch event](https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#repository_dispatch)
+
+### 示例 cURL 请求：
+```bash
+curl -X POST \
+  -H "Accept: application/vnd.github+json" \
+  -H "Authorization: Bearer <YOUR_GITHUB_PERSONAL_ACCESS_TOKEN>" \
+  https://api.github.com/repos/netbuffer/github-actions-demo/dispatches \
+  -d '{
+    "event_type": "webhook_trigger",
+    "client_payload": {
+      "env": "production",
+      "message": "Custom Remote Trigger Event"
+    }
+  }'
+```
