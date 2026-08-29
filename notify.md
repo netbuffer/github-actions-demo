@@ -1,6 +1,6 @@
 ### 🚀 GitHub Actions 自动化构建通知
 
-- **项目名称**: `${GITHUB_REPOSITORY}`
+- **项目名称**: [${GITHUB_REPOSITORY}](https://github.com/${GITHUB_REPOSITORY})
 - **触发分支**: `${GITHUB_REF_NAME}` (`${GITHUB_REF_TYPE}`)
 - **触发事件**: `${GITHUB_EVENT_NAME}`
 - **触发用户**: `${GITHUB_ACTOR}`
