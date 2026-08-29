@@ -72,6 +72,12 @@ async function main() {
   console.log(topDirs || 'N/A');
   console.log('=======================================================');
 
+  // 获取预装 Docker 镜像分析
+  const dockerImages = runCmd("docker images --format '{{.Repository}}:{{.Tag}} ({{.Size}})' | head -n 10");
+  
+  // 获取关键目录的大文件占用清单
+  const diskDetail = runCmd("sudo du -h -d 2 /usr /usr/local /opt /var/lib 2>/dev/null | sort -rh | head -n 12");
+
   // 将收集到的环境变量写入 GitHub Actions 环境变量传给后续步骤
   if (process.env.GITHUB_ENV) {
     const envData = [
@@ -83,8 +89,13 @@ async function main() {
       `RUNNER_PUBLIC_IP=${publicIp}`,
       `RUNNER_LOCAL_IP=${localIp}`,
       `TOOL_NODE_VER=${nodeVer}`,
+      `TOOL_JAVA_VER=${javaVer}`,
+      `TOOL_MAVEN_VER=${mvnVer}`,
       `TOOL_PYTHON_VER=${pythonVer}`,
-      `TOOL_DOCKER_VER=${dockerVer}`
+      `TOOL_DOCKER_VER=${dockerVer}`,
+      `TOOL_GIT_VER=${gitVer}`,
+      `DOCKER_PRECACHED_IMAGES=${dockerImages.replace(/\n/g, ' \\n ')}`,
+      `DISK_BREAKDOWN=${diskDetail.replace(/\n/g, ' \\n ')}`
     ].join('\n');
     
     require('fs').appendFileSync(process.env.GITHUB_ENV, envData + '\n');

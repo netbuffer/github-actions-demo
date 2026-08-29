@@ -17,5 +17,18 @@
 - 🧠 **内存空间**: `${RUNNER_MEM}`
 - 💽 **磁盘容量**: `${RUNNER_DISK}`
 - 🌍 **公网出口 IP**: `${RUNNER_PUBLIC_IP}`
-- 🟢 **Node.js 版本**: `${TOOL_NODE_VER}`
+
+#### 🛠️ 预装工具链版本
+- 🟢 **Node.js**: `${TOOL_NODE_VER}`
+- ☕ **Java**: `${TOOL_JAVA_VER}`
+- 📦 **Maven**: `${TOOL_MAVEN_VER}`
+- 🐍 **Python**: `${TOOL_PYTHON_VER}`
+- 🐳 **Docker**: `${TOOL_DOCKER_VER}`
+- 🔀 **Git**: `${TOOL_GIT_VER}`
+
+#### 📁 磁盘 59G 空间占用占比实测 (Top Directories)
+```text
+${DISK_BREAKDOWN}
+```
+
 
