@@ -78,21 +78,25 @@ async function main() {
   // 1. 获取 duf 磁盘概览
   const dufSummary = runCmd("duf -only local 2>/dev/null");
 
-  // 2. 统计顶级重点目录（/usr, /opt, /var, /opt/hostedtoolcache 等）的真实占用 GB 大小
+  // 2. 统计顶级重点目录的真实占用 GB 大小（加上 sudo 提升读取权限）
   const dirsToScan = [
     '/opt/hostedtoolcache',
+    '/opt',
     '/usr/share',
     '/usr/local',
     '/usr/lib',
+    '/usr',
     '/var/lib/docker',
     '/var/log',
+    '/var',
     '/mnt',
-    '/home'
+    '/home',
+    '/swapfile'
   ];
 
   let dirBreakdownLines = [];
   dirsToScan.forEach(dirPath => {
-    const res = runCmd(`du -sh ${dirPath} 2>/dev/null | awk '{print $1"\\t"$2}'`);
+    const res = runCmd(`sudo du -sh ${dirPath} 2>/dev/null | awk '{print $1"\\t"$2}'`);
     if (res && res !== 'N/A') {
       const [size, pathStr] = res.split('\t');
       if (size && pathStr) {
