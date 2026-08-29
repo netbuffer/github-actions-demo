@@ -66,6 +66,10 @@ async function main() {
   console.log(`🐍 Python      : ${pythonVer}`);
   console.log(`🐳 Docker      : ${dockerVer}`);
   console.log(`🔀 Git         : ${gitVer}`);
+  console.log('-------------------------------------------------------');
+  console.log('📁 磁盘空间大文件与目录分析 (Top Space Consumers):');
+  const topDirs = runCmd("sudo du -h -d 2 / 2>/dev/null | sort -rh | head -n 20");
+  console.log(topDirs || 'N/A');
   console.log('=======================================================');
 
   // 将收集到的环境变量写入 GitHub Actions 环境变量传给后续步骤
