@@ -75,24 +75,8 @@ async function main() {
   // 获取预装 Docker 镜像分析
   const dockerImages = runCmd("docker images --format '{{.Repository}}:{{.Tag}} ({{.Size}})' | head -n 10");
   
-  // 极其稳定快速的单次 du 命令抓取关键目录（绝对零超时、不被权限阻塞）
-  const diskRaw = runCmd("du -sk /opt /usr /var /opt/hostedtoolcache /usr/share /usr/local /var/lib/docker 2>/dev/null | sort -rn");
-  let diskDetail = '无数据';
-  if (diskRaw && diskRaw !== 'N/A') {
-    diskDetail = diskRaw
-      .split('\n')
-      .map((line) => {
-        const parts = line.trim().split(/\s+/);
-        if (parts.length < 2) return null;
-        const kb = parseInt(parts[0], 10);
-        const pathStr = parts[1];
-        if (isNaN(kb)) return null;
-        const gb = (kb / (1024 * 1024)).toFixed(2);
-        return `• ${pathStr.padEnd(24)} : ${gb} GB`;
-      })
-      .filter(Boolean)
-      .join('\n');
-  }
+  // 使用现代极简可视化磁盘分析工具 duf + df 组合
+  let diskDetail = runCmd("duf -only local 2>/dev/null || df -h -T -x tmpfs -x devtmpfs -x squashfs");
 
   // 将收集到的环境变量写入 GitHub Actions 环境变量传给后续步骤
   if (process.env.GITHUB_ENV) {
