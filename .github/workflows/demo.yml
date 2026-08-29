@@ -1,0 +1,41 @@
+name: GitHub Actions Demo
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-22.04
+
+    steps:
+      # Action 来源: https://github.com/actions/checkout
+      - name: Checkout repository code
+        uses: actions/checkout@v7
+
+      # Action 来源: https://github.com/actions/setup-node
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Run tests
+        run: npm test
+
+      # Action 来源: https://github.com/ghostoy/dingtalk-action
+      - name: Send DingTalk Notification
+        if: always()
+        uses: ghostoy/dingtalk-action@v1.0.0
+        with:
+          webhook: ${{ secrets.DINGTALK_WEBHOOK }}
+          secret: ${{ secrets.DINGTALK_SECRET }}
+          msgtype: markdown
+          content: |
+            {
+              "title": "GitHub Actions 单元测试与构建通知",
+              "text": "### 🚀 CI/CD 构建通知\n- **仓库**: ${{ github.repository }}\n- **分支**: ${{ github.ref_name }}\n- **触发者**: ${{ github.actor }}\n- **构建状态**: ${{ job.status == 'success' && '✅ 成功' || '❌ 失败' }}\n- **提交信息**: ${{ github.event.head_commit.message }}"
+            }
