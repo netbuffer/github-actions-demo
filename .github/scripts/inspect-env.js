@@ -76,7 +76,7 @@ async function main() {
   const dockerImages = runCmd("docker images --format '{{.Repository}}:{{.Tag}} ({{.Size}})' | head -n 10");
   
   // 获取关键目录的大文件占用清单
-  const diskDetail = runCmd("sudo du -h -d 2 /usr /usr/local /opt /var/lib 2>/dev/null | sort -rh | head -n 12");
+  const diskDetail = runCmd("du -h -d 1 /usr /usr/local /opt /var /mnt /home 2>/dev/null | sort -rh | head -n 12");
 
   // 将收集到的环境变量写入 GitHub Actions 环境变量传给后续步骤
   if (process.env.GITHUB_ENV) {

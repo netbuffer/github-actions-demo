@@ -9,9 +9,10 @@ github-actions-demo/
 ├── .github/
 │   ├── scripts/
 │   │   └── send-dingtalk.js # 原生 Node.js 钉钉通知脚本 (支持安全加签、零 warning)
+│   ├── template/
+│   │   └── notify.md        # 钉钉通知 Markdown 消息模板
 │   └── workflows/
 │       └── demo.yml         # GitHub Actions 工作流配置文件
-├── notify.md                # 钉钉通知 Markdown 消息模板
 ├── index.js                 # 核心代码示例
 ├── index.test.js            # 测试脚本
 └── package.json             # Node.js 项目配置与脚本
@@ -19,9 +20,9 @@ github-actions-demo/
 
 ---
 
-## 📌 `notify.md` 模板可用的环境变量列表
+## 📌 `.github/template/notify.md` 模板可用的环境变量列表
 
-在 `notify.md` 模板文件中，你可以直接使用格式如 `${VAR_NAME}` 的环境变量。脚本会自动解析并替换：
+在 `.github/template/notify.md` 模板文件中，你可以直接使用格式如 `${VAR_NAME}` 的环境变量。脚本会自动解析并替换：
 
 ### 1. 常用自定义与扩展变量
 | 变量名 | 说明 | 示例 |

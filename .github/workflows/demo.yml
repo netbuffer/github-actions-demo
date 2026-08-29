@@ -10,6 +10,7 @@ on:
 jobs:
   build-and-test:
     # Runner 可选列表参考文档: https://docs.github.com/en/actions/reference/runners/github-hosted-runners
+    # https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2404-Readme.md 预装软件列表
     runs-on: ubuntu-24.04
 
     steps:

@@ -12,8 +12,8 @@ function sendDingTalk() {
     return;
   }
 
-  // 读取 notify.md 消息模版
-  const templatePath = path.join(__dirname, '../../notify.md');
+  // 读取 .github/template/notify.md 消息模版
+  const templatePath = path.join(__dirname, '../template/notify.md');
   let content = fs.readFileSync(templatePath, 'utf8');
 
   // 构建状态友好的显示图标
