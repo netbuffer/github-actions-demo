@@ -9,6 +9,7 @@ on:
 
 jobs:
   build-and-test:
+    # Runner 可选列表参考文档: https://docs.github.com/en/actions/reference/runners/github-hosted-runners
     runs-on: ubuntu-22.04
 
     steps:
