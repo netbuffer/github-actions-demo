@@ -75,11 +75,8 @@ async function main() {
   // 获取预装 Docker 镜像分析
   const dockerImages = runCmd("docker images --format '{{.Repository}}:{{.Tag}} ({{.Size}})' | head -n 10");
   
-  // 使用纯 Bash 原生指令列出根目录下各顶级目录的大小占比（如 /usr, /opt, /var 等）
-  let diskDetail = runCmd("df -h --output=target,size,used,avail / | tail -n 1 && echo '---' && du -sh /usr /opt /var /mnt /home /etc /root /usr/local /opt/hostedtoolcache 2>/dev/null | sort -rh");
-  if (!diskDetail || diskDetail === 'N/A') {
-    diskDetail = runCmd("ls -la /");
-  }
+  // 扫描顶级重点目录及工具缓存目录
+  let diskDetail = runCmd("du -sh /opt /usr /var /mnt /home /opt/hostedtoolcache /usr/share /usr/local 2>/dev/null | sort -rh");
 
   // 将收集到的环境变量写入 GitHub Actions 环境变量传给后续步骤
   if (process.env.GITHUB_ENV) {
