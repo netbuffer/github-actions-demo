@@ -2,7 +2,7 @@ const { execSync } = require('child_process');
 const os = require('os');
 const https = require('https');
 
-function runCmd(cmd, timeoutMs = 25000) {
+function runCmd(cmd, timeoutMs = 60000) {
   try {
     return execSync(cmd, { encoding: 'utf8', timeout: timeoutMs }).trim();
   } catch (e) {
@@ -78,8 +78,8 @@ async function main() {
   // 1. 获取 duf 磁盘概览
   const dufSummary = runCmd("duf -only local 2>/dev/null");
 
-  // 使用 -x (--one-file-system) 参数避开虚拟挂载点，零卡顿抓取真实磁盘根目录下全量文件夹大细
-  const topUsageOutput = runCmd("sudo du -hx -d 2 / 2>/dev/null | sort -rh | head -n 16");
+  // 直接在指定目录下进行无风险极速扫描，避免扫描整个根目录触发超时
+  const topUsageOutput = runCmd("sudo du -sh /opt /opt/hostedtoolcache /usr /usr/share /usr/local /usr/lib /var /var/lib/docker /home /swapfile 2>/dev/null | sort -rh");
   
   let dirBreakdownLines = [];
   if (topUsageOutput && topUsageOutput !== 'N/A') {
