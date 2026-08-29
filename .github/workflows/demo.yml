@@ -26,7 +26,7 @@ jobs:
       - name: Run tests
         run: npm test
 
-      # 原生 Node.js 自研钉钉通知脚本 (独立 msg.txt 模板维护，零依赖，零 Warning)
+      # 原生 Node.js 自研钉钉通知脚本 (独立 msg.md 模板维护，零依赖，零 Warning)
       - name: Send Custom DingTalk Notification
         if: always()
         env:

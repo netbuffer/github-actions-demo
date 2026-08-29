@@ -12,23 +12,28 @@ function sendDingTalk() {
     return;
   }
 
-  // 读取消息模版
-  const templatePath = path.join(__dirname, '../../msg.txt');
+  // 读取 msg.md 消息模版
+  const templatePath = path.join(__dirname, '../../msg.md');
   let content = fs.readFileSync(templatePath, 'utf8');
 
-  // 环境变量替换模版占位符
+  // 构建状态友好的显示图标
   const status = process.env.JOB_STATUS === 'success' ? '✅ 成功' : '❌ 失败';
-  content = content
-    .replace('${REPO}', process.env.GITHUB_REPOSITORY || '')
-    .replace('${BRANCH}', process.env.GITHUB_REF_NAME || '')
-    .replace('${ACTOR}', process.env.GITHUB_ACTOR || '')
-    .replace('${STATUS}', status)
-    .replace('${SHA}', (process.env.GITHUB_SHA || '').substring(0, 7))
-    .replace('${COMMIT_MSG}', process.env.COMMIT_MSG || '');
+
+  // 映射环境变量与自定义变量
+  const variables = {
+    ...process.env,
+    JOB_STATUS: status,
+    SHORT_SHA: (process.env.GITHUB_SHA || '').substring(0, 7)
+  };
+
+  // 支持在 msg.md 中使用任意 ${VAR_NAME} 形式的环境变量
+  content = content.replace(/\$\{([A-Z0-9_]+)\}/g, (match, key) => {
+    return variables[key] !== undefined ? variables[key] : match;
+  });
 
   let targetUrl = webhook;
 
-  // 钉钉加签处理
+  // 钉钉安全加签处理
   if (secret) {
     const timestamp = Date.now();
     const stringToSign = `${timestamp}\n${secret}`;
@@ -46,7 +51,7 @@ function sendDingTalk() {
   const payload = JSON.stringify({
     msgtype: 'markdown',
     markdown: {
-      title: 'GitHub Actions 构建通知',
+      title: `${process.env.GITHUB_REPOSITORY || 'GitHub'} 构建通知`,
       text: content
     }
   });
