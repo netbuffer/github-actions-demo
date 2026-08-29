@@ -31,6 +31,8 @@ github-actions-demo/
 | `${COMMIT_MSG}` | 当前提交的核心 Commit Message | `refactor: use msg.md` |
 
 ### 2. GitHub 官方默认环境变量 (内置可用)
+> 官方完整变量列表参考文档: [GitHub Default environment variables](https://docs.github.com/en/actions/writing-workflows/choose-what-workflows-do/store-information-in-variables#default-environment-variables)
+
 | 变量名 | 说明 | 示例 |
 | :--- | :--- | :--- |
 | `${GITHUB_REPOSITORY}` | 仓库名称 (owner/repo) | `netbuffer/github-actions-demo` |
