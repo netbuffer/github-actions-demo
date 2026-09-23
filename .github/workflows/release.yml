@@ -1,0 +1,142 @@
+name: Release & Deploy Pages
+
+# Release 能力测试工作流: 发版 → 自动创建 GitHub Release → 自动部署 GitHub Pages
+# 官方文档参考: https://docs.github.com/en/actions/writing-workflows
+on:
+  # 方式一: 推送 v 开头的 Tag 触发发版 (推荐)
+  push:
+    tags: ['v*']
+  # 方式二: 在 GitHub 页面手动创建并发布 Release 时触发
+  # 注: 由 GITHUB_TOKEN 创建的 Release 不会再次触发本工作流 (GitHub 防递归触发机制)，因此不会重复执行
+  release:
+    types: [published]
+  # 方式三: 在 Actions 页面手动触发 (便于随时测试，可指定版本号)
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release 版本号 (如 v1.0.1，留空则使用 package.json 中的版本号)'
+        required: false
+        default: ''
+      notes:
+        description: 'Release 变更说明 (Markdown 格式，将渲染到 Release Notes 的变更说明章节)'
+        required: false
+        default: ''
+
+# 所需权限说明:
+# - contents: write  创建 Tag 与 GitHub Release
+# - pages: write     部署 GitHub Pages
+# - id-token: write  获取 OIDC 令牌 (Pages 部署认证)
+# - actions: read    读取 Pages 构建产物 (deploy-pages 基于 artifact 部署)
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  actions: read
+
+# 防止并发部署 Pages 相互覆盖，同组排队串行执行
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  # 阶段一: 质量门禁 → 发版 → 生成 Pages 构建产物
+  release:
+    name: Test & Release
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+
+      # 统一解析本次发版的版本号:
+      # - push tag / release 事件: 直接使用触发的 Tag 名
+      # - 手动触发: 优先使用输入值，留空则读取 package.json 版本号
+      - name: Resolve release tag
+        id: tag
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "push" ] || [ "$GITHUB_EVENT_NAME" = "release" ]; then
+            TAG="$GITHUB_REF_NAME"
+          else
+            TAG="$INPUT_TAG"
+            if [ -z "$TAG" ]; then
+              TAG="v$(node -p "require('./package.json').version")"
+            fi
+          fi
+          echo "name=$TAG" >> "$GITHUB_OUTPUT"
+          echo "📦 本次发版版本号: $TAG"
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      # 发版前质量门禁: 测试不通过则中止发版与 Pages 部署
+      - name: Run tests
+        run: npm test
+
+      # 手动触发时补建并推送 Tag (Tag 已存在则跳过)
+      - name: Create tag if missing
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          TAG="${{ steps.tag.outputs.name }}"
+          if git ls-remote --tags origin "refs/tags/$TAG" | grep -q "$TAG"; then
+            echo "⚠️ Tag $TAG 已存在，跳过 Tag 创建"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "$TAG" -m "Release $TAG"
+            git push origin "$TAG"
+            echo "✅ 已创建并推送 Tag $TAG"
+          fi
+
+      # 生成 Pages 静态页面 (零依赖 Node 脚本，读取 .github/template/pages.html 模板)
+      - name: Generate Pages site
+        env:
+          RELEASE_TAG: ${{ steps.tag.outputs.name }}
+        run: npm run build:pages
+
+      # 生成 Release Notes (零依赖 Node 脚本，读取 .github/template/release-notes.md 模板并替换变量;
+      # 手动触发时可通过 notes 输入框传入 Markdown 格式的变更说明)
+      - name: Generate release notes
+        env:
+          RELEASE_TAG: ${{ steps.tag.outputs.name }}
+          RELEASE_NOTES_INPUT: ${{ inputs.notes }}
+        run: npm run build:notes
+
+      # 创建/更新 GitHub Release (Notes 由模板渲染生成，并将页面与笔记作为构建产物附件上传)
+      # Action 来源: https://github.com/softprops/action-gh-release
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.tag.outputs.name }}
+          name: Release ${{ steps.tag.outputs.name }}
+          body_path: dist/release-notes.md
+          files: |
+            dist/index.html
+            dist/release-notes.md
+
+      # 以下为官方 GitHub Pages 部署三件套 (configure → upload → deploy)
+      # 官方文档参考: https://docs.github.com/en/actions/writing-workflows
+      - name: Configure Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  # 阶段二: 部署 GitHub Pages (基于上一阶段上传的 artifact 部署，无需再次 checkout)
+  deploy-pages:
+    name: Deploy GitHub Pages
+    needs: release
+    runs-on: ubuntu-24.04
+    # github-pages 环境会在首次部署时自动创建，并在工作流 Summary 页展示部署地址
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

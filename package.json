@@ -4,7 +4,9 @@
   "description": "GitHub Actions Demo",
   "main": "index.js",
   "scripts": {
-    "test": "node index.test.js"
+    "test": "node index.test.js",
+    "build:pages": "node .github/scripts/generate-pages.js",
+    "build:notes": "node .github/scripts/generate-release-notes.js"
   },
   "keywords": [],
   "author": "",

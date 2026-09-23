@@ -1,3 +1,6 @@
 node_modules/
 .DS_Store
 *.log
+
+# GitHub Pages 构建产物 (由 .github/scripts/generate-pages.js 自动生成)
+dist/
